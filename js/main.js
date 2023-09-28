@@ -4,30 +4,25 @@ const opButtons = document.querySelectorAll(".op-btn");
 const clearButton = document.getElementById("borrar");
 const equalsButton = document.getElementById("igual");
 const historyDiv = document.getElementById("history");
-const locationName = 'America/Argentina/Buenos_Aires';
+const limpiarHistorialButton = document.getElementById("limpiarHistorial");
 
 let currentInput = "0";
 let currentOperator = "";
 let previousValue = 0;
 let currentExpression = "";
 
-fetchTimeAndDate(locationName)
-  .then(dateTime => {
-    console.log(`Fecha y hora en ${locationName}: ${dateTime}`);
-  })
-  .catch(error => {
-    console.error('Error al obtener la fecha y hora:', error);
-  });
-
-// Función para agregar el resultado al historial
 function addToHistory(operation) {
     historyDiv.innerHTML += `<div>${operation}</div>`;
 }
 
-//Funciones para guardar resultado
+limpiarHistorialButton.addEventListener("click", () => {
+    historyDiv.innerHTML = "";
+});
+
 function updateDisplay() {
     display.value = currentInput;
 }
+
 function loadState() {
     const savedState = localStorage.getItem("calculatorState");
     if (savedState) {
@@ -38,6 +33,7 @@ function loadState() {
         updateDisplay();
     }
 }
+
 function saveState() {
     const state = {
         currentInput: currentInput,
@@ -46,29 +42,9 @@ function saveState() {
     };
     localStorage.setItem("calculatorState", JSON.stringify(state));
 }
+
 loadState();
 
-// Función para obtener la fecha y hora
-function fetchTimeAndDate(location) {
-    const apiUrl = `http://worldtimeapi.org/api/timezone/${location}`;
-  
-    return fetch(apiUrl)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`Error en la solicitud: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        return data.datetime;
-      })
-      .catch(error => {
-        console.error(`Error: ${error.message}`);
-        throw error;
-      });
-  }
-
-// Agregando evento a los botones
 numButtons.forEach(button => {
     button.addEventListener("click", () => {
         if (currentInput === "0") {
@@ -79,6 +55,7 @@ numButtons.forEach(button => {
         updateDisplay();
     });
 });
+
 opButtons.forEach(button => {
     button.addEventListener("click", () => {
         if (currentOperator !== "") {
@@ -89,6 +66,7 @@ opButtons.forEach(button => {
         currentInput = "0";
     });
 });
+
 equalsButton.addEventListener("click", () => {
     if (currentOperator !== "") {
         performCalculation();
@@ -98,6 +76,7 @@ equalsButton.addEventListener("click", () => {
         saveState();
     }
 });
+
 clearButton.addEventListener("click", () => {
     currentInput = "0";
     currentOperator = "";
@@ -105,8 +84,7 @@ clearButton.addEventListener("click", () => {
     updateDisplay();
 });
 
-// Funciones de botones de calculos
-function performCalculation() {
+async function performCalculation() {
     const currentValue = parseFloat(currentInput);
     let result;
     const operator = currentOperator;
@@ -125,16 +103,20 @@ function performCalculation() {
             break;
     }
     
-    // Llamar a fetchTimeAndDate para la fecha y hora
-    fetchTimeAndDate(locationName)
-        .then(dateTime => {
+    const formattedDateTime = new Date().toLocaleString();
+    const randomUserId = Math.floor(Math.random() * 10) + 1;
+    const operation = `${previousValue} ${operator} ${currentValue} = ${result} (${formattedDateTime})`;
 
-            const formattedDateTime = new Date(dateTime).toLocaleString();
-            const operation = `${previousValue} ${operator} ${currentValue} = ${result} (${formattedDateTime})`;
-            addToHistory(operation);
-            currentExpression = result.toString();
-        })
-        .catch(error => {
-            console.error('Error de la fecha y hora:', error);
-        });
+    try {
+        const response = await fetch(`https://jsonplaceholder.typicode.com/users/${randomUserId}`);
+        if (!response.ok) {
+            throw new Error('error de respuesta');
+        }
+        const user = await response.json();
+        addToHistory(`${operation} - Usuario: ${user.name}`);
+    } catch (error) {
+        console.error('Error al recibir datos:', error);
+        addToHistory(`${operation} - Error al recibir datos de usuario`);
+    }
+    currentExpression = result.toString();
 }

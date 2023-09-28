@@ -91,6 +91,11 @@
     cursor: pointer;
 }
 
+.clear{
+    color: #636060;
+    padding: 0.5rem
+}
+
 .btn:hover {
     background-color: #090c31;
 }
